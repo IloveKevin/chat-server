@@ -5,7 +5,7 @@ const secretKey = config.token.key;
 
 // 生成 JWT 令牌
 const createToken = (user, expiresIn) => {
-    return Jwt.sign({ id: user.id, username: user.username }, secretKey, { expiresIn });
+    return Jwt.sign({ id: user.id, account: user.account }, secretKey, { expiresIn });
 }
 
 // 验证 JWT 令牌
@@ -25,7 +25,7 @@ const verifyTokenMiddleware = (req, res, next) => {
         if (err) {
             return res.status(401).json({ code: 1, message: '令牌无效' });
         }
-        req.username = decoded.username;
+        req.account = decoded.account;
         const savedToken = getToken('login' + decoded.id);
         if (savedToken !== token) {
             return res.status(401).json({ code: 1, message: '令牌无效' });

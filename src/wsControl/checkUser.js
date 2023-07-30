@@ -17,7 +17,7 @@ export default (wss) => {
                         ws.close();
                         return;
                     }
-                    let user = db('tb_user').where({ username: _decoded.username }).first();
+                    let user = db('tb_user').where({ account: _decoded.account }).first();
                     if (!user || (getToken('refresh' + user.id) !== refreshToken)) {
                         ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败")));
                         ws.close();
@@ -32,7 +32,7 @@ export default (wss) => {
                 });
                 return;
             }
-            let user = db('tb_user').where({ username: decoded.username }).first();
+            let user = db('tb_user').where({ account: decoded.account }).first();
             if (!user || user.token !== token) {
                 ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败")));
                 ws.close();

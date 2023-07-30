@@ -9,26 +9,26 @@ import { setToken } from '../token';
 const router = express.Router();
 
 router.post('/login', [
-    body('username')
+    body('account')
         .isString()
-        .withMessage('username必须是字符串')
+        .withMessage('账号必须是字符串')
         .isLength({ min: 6, max: 12 })
-        .withMessage('username长度'),
+        .withMessage('账号长度必须小于12位，大于6位'),
     body('password')
         .isString()
-        .withMessage('username必须是字符串')
+        .withMessage('密码必须是字符串')
         .isLength({ min: 6, max: 12 })
-        .withMessage('password长度'),
+        .withMessage('密码长度必须小于12位，大于6位'),
     paramterValidation
 ], (req, res) => {
     // 获取请求体中的用户名和密码
-    const { username, password } = req.body;
-    if (!username || !password) {
+    const { account, password } = req.body;
+    if (!account || !password) {
         // 如果用户名或密码为空，则返回错误信息
         return res.json({ code: 1, message: '用户名或密码不能为空' });
     }
     // 遍历用户数据，检查用户名和密码是否正确
-    const user = db('tb_user').where({ username, password }).first();
+    const user = db('tb_user').where({ account, password }).first();
     if (user) {
         // 登录成功，生成 JWT 令牌
         const token = createToken(user, config.token.login);
@@ -44,19 +44,20 @@ router.post('/login', [
 });
 
 router.post('/register', [
-    body('username').isString().withMessage('username必须是字符串').isLength({ min: 6, max: 12 }).withMessage('username长度'),
-    body('password').isString().withMessage('username必须是字符串').isLength({ min: 6, max: 12 }).withMessage('password长度'),
+    body('account').isString().withMessage('账号必须是字符串').isLength({ min: 6, max: 12 }).withMessage('账号长度必须shi小于12位，大于6位'),
+    body('password').isString().withMessage('密码必须是字符串').isLength({ min: 6, max: 12 }).withMessage('密码长度必须小于12位，大于6位'),
     paramterValidation
 ], (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
+    const { account, password } = req.body;
+    if (!account || !password) {
         return res.json({ code: 1, message: '用户名或密码不能为空' });
     }
-    const existingUser = db('tb_user').where({ username }).first();
+    const existingUser = db('tb_user').where({ account }).first();
     if (existingUser) {
         return res.json({ code: 1, message: '用户名已存在' });
     }
-    db('tb_user').insert({ username, password })
+    let nickname = '用户' + Math.floor(Math.random() * 1000000);
+    db('tb_user').insert({ account, password, nickname })
         .then((id) => {
             return res.json({ code: 0, message: '注册成功' });
         })
