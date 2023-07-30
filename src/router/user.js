@@ -1,5 +1,5 @@
 import express from 'express';
-import { createToken } from '../jwt';
+import { createToken } from '../token/jwt';
 import { body } from 'express-validator';
 import paramterValidation from '../parameterValidation';
 import config from '../config';

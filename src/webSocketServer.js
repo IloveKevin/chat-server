@@ -4,6 +4,7 @@ import eventListeners from './eventListeners/eventListeners';
 import heartPing from './wsControl/heartPing';
 import checkUser from './wsControl/checkUser';
 import { onlineUsers } from './users';
+import code from './common/code';
 
 // 定义一个websocket服务器
 const wss = new ws.Server({ port: 8080 });
@@ -39,7 +40,7 @@ wss.on('connection', (client) => {
             }
             if (client.login) {
                 console.log(client.login);
-                client.send(JSON.stringify(new msgBase()));
+                client.send(JSON.stringify(new msgBase(code.heartPing.code, code.heartPing.state.success, '心跳包')));
             }
             if (client.readyState !== ws.OPEN) return;
         },

@@ -1,6 +1,6 @@
 import Jwt from 'jsonwebtoken';
-import { getToken } from './token';
-import config from './config';
+import { getToken } from '.';
+import config from '../config';
 const secretKey = config.token.key;
 
 // 生成 JWT 令牌
