@@ -28,19 +28,22 @@ router.post('/login', [
         return res.json({ code: 1, message: '用户名或密码不能为空' });
     }
     // 遍历用户数据，检查用户名和密码是否正确
-    const user = db('tb_user').where({ account, password }).first();
-    if (user) {
-        // 登录成功，生成 JWT 令牌
-        const token = createToken(user, config.token.login);
-        // 生成刷新令牌
-        const refreshToken = createToken(user, config.token.refresh);
-        // 将令牌保存在内存中
-        setToken('login' + user.id, token);
-        setToken('refresh' + user.id, refreshToken);
-        return res.json({ code: 0, message: '登录成功', token, refreshToken });
-    } else {
+    db('tb_user').where({ account, password }).first().then((user) => {
+        if (user) {
+            // 登录成功，生成 JWT 令牌
+            const token = createToken(user, config.token.login);
+            // 生成刷新令牌
+            const refreshToken = createToken(user, config.token.refresh);
+            // 将令牌保存在内存中
+            setToken('login' + user.id, token);
+            setToken('refresh' + user.id, refreshToken);
+            return res.json({ code: 0, message: '登录成功', token, refreshToken });
+        } else {
+            return res.json({ code: 1, message: '登录失败' });
+        }
+    }).catch((err) => {
         return res.json({ code: 1, message: '登录失败' });
-    }
+    });
 });
 
 router.post('/register', [
