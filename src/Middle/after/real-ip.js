@@ -5,4 +5,4 @@ function getRealIp(req, res, next) {
     next();
 }
 
-export default (app) => app.use(getRealIp);
+export default getRealIp;

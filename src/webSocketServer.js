@@ -32,14 +32,12 @@ wss.on('connection', (client) => {
         max: 3,
         ping() {
             this.count++;
-            console.log(this.count);
             if (this.count === this.max) {
                 console.log('心跳包超时断开连接');
                 client.close();
                 return;
             }
             if (client.login) {
-                console.log(client.login);
                 client.send(JSON.stringify(new msgBase(code.heartPing.code, code.heartPing.state.success, '心跳包')));
             }
             if (client.readyState !== ws.OPEN) return;

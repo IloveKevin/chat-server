@@ -9,4 +9,4 @@ const rateLimitMiddleware = rateLimit({
     }
 });
 
-export default (app) => app.use(rateLimitMiddleware);
+export default rateLimitMiddleware;
