@@ -8,7 +8,16 @@ export default {
         host: 'localhost',
         user: 'sa',
         password: '123456',
-        database: 'chat',
-        options: {}
+        options: {
+            instanceName: 'SQLEXPRESS',
+            database: 'chat',
+        }
+    },
+    httpServer: {
+        port: 3000,//端口
+    },
+    webSkctetServer: {
+        port: 3001,//端口
+        heartTime: 1000 * 60,//心跳检测时间
     }
 }

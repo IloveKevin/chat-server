@@ -30,7 +30,7 @@ export default (wss) => {
                         ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.refresh, { token: newToken, refreshToken: newRefreshToken })));
                         ws.login = true;
                     }).catch((err) => {
-                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败,服务器异常")));
+                        ws.send(JSON.stringify(new msgBase(code.serverError.code, -1, "登录失败,服务器异常")));
                         ws.close();
                         return;
                     });
@@ -46,7 +46,7 @@ export default (wss) => {
                 ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.success, "登录成功")));
                 ws.login = true;
             }).catch((err) => {
-                ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，服务器异常")));
+                ws.send(JSON.stringify(new msgBase(code.serverError.code, -1, "登录失败，服务器异常")));
                 ws.close();
                 return;
             });

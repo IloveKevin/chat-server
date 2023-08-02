@@ -3,6 +3,7 @@ import afterMidle from './src/middle/after';
 import beforeMidle from './src/middle/before';
 import wss from './src/webSocketServer';
 import router from './src/router';
+import config from './src/config';
 
 // 定义一个express实例
 const app = express();
@@ -18,7 +19,7 @@ router(app);
 // 使用后置中间件
 beforeMidle(app);
 
-app.listen(3000, () => {
+app.listen(config.httpServer.port, () => {
     console.log('Server listening on port 3000');
 });
 

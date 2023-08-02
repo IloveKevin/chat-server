@@ -6,6 +6,6 @@ import requestLogger from './request-logger'
 export default (app) => {
     app.use(realIp);
     app.use(bodyParserJson);
-    app.use(rateLimit);
+    // app.use(rateLimit);
     app.use(requestLogger);
 }

@@ -1,13 +1,12 @@
-import msgBase from './msgBase';
 import ws from 'ws';
 import eventListeners from './eventListeners/eventListeners';
 import heartPing from './wsControl/heartPing';
 import checkUser from './wsControl/checkUser';
 import { onlineUsers } from './users';
-import code from './common/code';
+import config from './config';
 
 // 定义一个websocket服务器
-const wss = new ws.Server({ port: 8080 });
+const wss = new ws.Server({ port: config.webSkctetServer.port });
 console.log('websocket服务器启动成功');
 wss.sendMsg = (msg, ...clients) => {
     clients.forEach(client => {
@@ -65,6 +64,6 @@ setInterval(() => {
 
         return client.close(1011);
     });
-}, 1000 * 60);
+}, config.webSkctetServer.heartTime);
 
 export default wss;
