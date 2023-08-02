@@ -13,33 +13,43 @@ export default (wss) => {
             if (err) {
                 verifyToken(refreshToken, (err, _decoded) => {
                     if (err) {
-                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败")));
+                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，token以及刷新token校验失败")));
                         ws.close();
                         return;
                     }
-                    let user = db('tb_user').where({ account: _decoded.account }).first();
-                    if (!user || (getToken('refresh' + user.id) !== refreshToken)) {
-                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败")));
+                    db('tb_user').where({ account: _decoded.account }).first().then((user) => {
+                        if (!user || (getToken('refresh' + user.id) !== refreshToken)) {
+                            ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，用户不存在或刷新token不正确")));
+                            ws.close();
+                            return;
+                        }
+                        let newToken = createToken(user, config.token.login);
+                        let newRefreshToken = createToken(user, config.token.refresh);
+                        setToken('login' + user.id, newToken);
+                        setToken('refresh' + user.id, newRefreshToken);
+                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.refresh, { token: newToken, refreshToken: newRefreshToken })));
+                        ws.login = true;
+                    }).catch((err) => {
+                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败,服务器异常")));
                         ws.close();
                         return;
-                    }
-                    let newToken = createToken(user, config.token.login);
-                    let newRefreshToken = createToken(user, config.token.refresh);
-                    setToken('login' + user.id, newToken);
-                    setToken('refresh' + user.id, newRefreshToken);
-                    ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.refresh, { token: newToken, refreshToken: newRefreshToken })));
-                    ws.login = true;
+                    });
                 });
                 return;
             }
-            let user = db('tb_user').where({ account: decoded.account }).first();
-            if (!user || user.token !== token) {
-                ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败")));
+            db('tb_user').where({ account: decoded.account }).first().then((user) => {
+                if (!user || getToken('login' + user.id) !== token) {
+                    ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，用户不存在或token不正确")));
+                    ws.close();
+                    return;
+                }
+                ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.success, "登录成功")));
+                ws.login = true;
+            }).catch((err) => {
+                ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，服务器异常")));
                 ws.close();
                 return;
-            }
-            ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.success, "登录成功")));
-            ws.login = true;
+            });
         });
     })
 }
