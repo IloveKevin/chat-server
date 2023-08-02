@@ -18,7 +18,7 @@ export default (wss) => {
                         return;
                     }
                     db('tb_user').where({ account: _decoded.account }).first().then((user) => {
-                        if (!user || (getToken('refresh' + user.id) !== refreshToken)) {
+                        if (!user || (getToken('refresh' + user.id) !== refreshToken) || getToken('login' + user.id) !== token) {
                             ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，用户不存在或刷新token不正确")));
                             ws.close();
                             return;

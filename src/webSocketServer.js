@@ -26,26 +26,8 @@ wss.on('connection', (client) => {
     onlineUsers.push(client);
     //添加登录属性
     client.login = false;
-    //添加心跳包计数器
-    client.pingCounter = {
-        count: 0,
-        max: 3,
-        ping() {
-            this.count++;
-            if (this.count === this.max) {
-                console.log('心跳包超时断开连接');
-                client.close();
-                return;
-            }
-            if (client.login) {
-                client.send(JSON.stringify(new msgBase(code.heartPing.code, code.heartPing.state.success, '心跳包')));
-            }
-            if (client.readyState !== ws.OPEN) return;
-        },
-        clear() {
-            this.count = 0;
-        }
-    };
+
+    client.isPing = true;
     // 监听客户端消息事件
     client.on('message', (message) => {
         try {
@@ -74,11 +56,15 @@ wss.on('connection', (client) => {
     });
 });
 
-//开启一个定时器，每隔5秒像所有客户端发送心跳包
+//开启一个定时器，每隔一分钟检测所有用户是否发送心跳包
 setInterval(() => {
     onlineUsers.forEach((client) => {
-        client.pingCounter.ping();
+        if (client.isPing) return client.isPing = false;
+
+        if (!client.login) return client.close(1008);
+
+        return client.close(1011);
     });
-}, 5000);
+}, 1000 * 60);
 
 export default wss;
