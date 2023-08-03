@@ -9,7 +9,7 @@ export default {
         user: 'sa',
         password: '123456',
         options: {
-            instanceName: 'SQLEXPRESS',
+            // instanceName: 'SQLEXPRESS',
             database: 'chat',
         }
     },

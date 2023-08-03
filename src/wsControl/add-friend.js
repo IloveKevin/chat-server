@@ -9,10 +9,10 @@ export default (wss) => {
         let friendId = msg.data.friendId;
         db('tb_friend').where({ user_id: userId, friend_id: friendId }).select('id').first().then((friend) => {
             if (friend) {
-                db('tb_friend').where({ id: friend.id }).update({ state: 2 })
+                db('tb_friend').where({ id: friend.id }).update({ state: 2 }).then(() => { });
             }
             else {
-                db('tb_friend').insert({ user_id: userId, friend_id: friendId, state: 2 })
+                db('tb_friend').insert({ user_id: userId, friend_id: friendId, state: 2 }).then(() => { });
             }
 
             db('tb_friend').where({ user_id: friendId, friend_id: userId }).first().then((friend) => {
