@@ -16,7 +16,7 @@ export default {
     httpServer: {
         port: 3000,//端口
     },
-    webSkctetServer: {
+    webSocketServer: {
         port: 3001,//端口
         heartTime: 1000 * 60,//心跳检测时间
     }

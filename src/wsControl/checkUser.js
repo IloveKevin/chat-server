@@ -4,6 +4,7 @@ import { getToken, setToken } from "../token";
 import msgBase from "../msgBase";
 import config from "../config";
 import code from "../common/code";
+import { onlineUsers } from "../users";
 
 //用户token验证
 export default (wss) => {
@@ -23,12 +24,19 @@ export default (wss) => {
                             ws.close();
                             return;
                         }
+                        let onlineUser = onlineUsers.find((item) => { item.account === user.account });
+                        if (onlineUser) {
+                            onlineUser.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.kick, "您的账号在其他地方登录，您已被迫下线")));
+                            onlineUser.close();
+                            onlineUsers.splice(onlineUsers.indexOf(onlineUser), 1);
+                        }
                         let newToken = createToken(user, config.token.login);
                         let newRefreshToken = createToken(user, config.token.refresh);
                         setToken('login' + user.id, newToken);
                         setToken('refresh' + user.id, newRefreshToken);
                         ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.refresh, { token: newToken, refreshToken: newRefreshToken })));
                         ws.login = true;
+                        ws.account = user.account;
                     }).catch((err) => {
                         ws.send(JSON.stringify(new msgBase(code.serverError.code, -1, "登录失败,服务器异常")));
                         ws.close();
@@ -43,8 +51,15 @@ export default (wss) => {
                     ws.close();
                     return;
                 }
+                let onlineUser = onlineUsers.find((item) => item.account === user.account);
+                if (onlineUser) {
+                    onlineUser.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.kick, "您的账号在其他地方登录，您已被迫下线")));
+                    onlineUser.close();
+                    onlineUsers.splice(onlineUsers.indexOf(onlineUser), 1);
+                }
                 ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.success, "登录成功")));
                 ws.login = true;
+                ws.account = user.account;
             }).catch((err) => {
                 ws.send(JSON.stringify(new msgBase(code.serverError.code, -1, "登录失败，服务器异常")));
                 ws.close();

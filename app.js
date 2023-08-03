@@ -20,7 +20,7 @@ router(app);
 beforeMidle(app);
 
 app.listen(config.httpServer.port, () => {
-    console.log('Server listening on port 3000');
+    console.log(`Server listening on port ${config.httpServer.port}!`);
 });
 
 export default app;

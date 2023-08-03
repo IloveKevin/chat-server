@@ -6,8 +6,8 @@ import { onlineUsers } from './users';
 import config from './config';
 
 // 定义一个websocket服务器
-const wss = new ws.Server({ port: config.webSkctetServer.port });
-console.log('websocket服务器启动成功');
+const wss = new ws.Server({ port: config.webSocketServer.port });
+console.log('websocket服务器启动成功，端口号: ', config.webSocketServer.port);
 wss.sendMsg = (msg, ...clients) => {
     clients.forEach(client => {
         if (client.readyState === ws.OPEN) {
@@ -64,6 +64,6 @@ setInterval(() => {
 
         return client.close(1011);
     });
-}, config.webSkctetServer.heartTime);
+}, config.webSocketServer.heartTime);
 
 export default wss;
