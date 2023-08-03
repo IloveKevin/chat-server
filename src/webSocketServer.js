@@ -2,8 +2,16 @@ import ws from 'ws';
 import eventListeners from './eventListeners/eventListeners';
 import heartPing from './wsControl/heartPing';
 import checkUser from './wsControl/checkUser';
+import getFriendList from './wsControl/get-friends';
+import getAddFriendList from './wsControl/get-addFriendList';
+import addFriend from './wsControl/add-friend';
+import handleAddFriend from './wsControl/handle-addfriend';
+import getUserInfo from './wsControl/get-userInfo';
 import { onlineUsers } from './users';
 import config from './config';
+import msgBase from './msgBase';
+import code from './common/code';
+import db from './db';
 
 // 定义一个websocket服务器
 const wss = new ws.Server({ port: config.webSocketServer.port });
@@ -18,6 +26,11 @@ wss.sendMsg = (msg, ...clients) => {
 wss.eventListeners = new eventListeners();
 heartPing(wss);
 checkUser(wss);
+getFriendList(wss);
+getAddFriendList(wss);
+addFriend(wss);
+handleAddFriend(wss);
+getUserInfo(wss);
 
 // 监听客户端连接事件
 wss.on('connection', (client) => {
@@ -37,6 +50,7 @@ wss.on('connection', (client) => {
             }
         }
         catch (err) {
+            client.send(JSON.stringify(new msgBase(code.serverError.code, -1, "服务器异常")));
             console.log('在收到客户端消息处理时发生异常');
             console.log('异常信息: ', err.message);
             console.log('错误类型: ', err.name);
@@ -49,6 +63,24 @@ wss.on('connection', (client) => {
         for (let i = 0; i < onlineUsers.length; i++) {
             if (onlineUsers[i] === client) {
                 onlineUsers.splice(i, 1);
+                //用户下线
+                //查询出所有好友
+                client.id && db('tb_friend').where({ friend_id: client.id }).select('user_id').then((frends) => {
+                    //遍历所有好友，如果在线则发送下线消息
+                    frends && frends.forEach((frend) => {
+                        //查询出好友是否在线
+                        let user = onlineUsers.find((item) => item.id === frend.user_id);
+                        if (user) {
+                            //发送下线消息
+                            user.send(JSON.stringify(new msgBase(code.userOffline.code, code.userOffline.state.success, client.id)));
+                        }
+                    });
+                }).catch((err) => {
+                    console.log('查询好友列表时发生异常');
+                    console.log('异常信息: ', err.message);
+                    console.log('错误类型: ', err.name);
+                    console.log('错误堆栈: ', err.stack);
+                });
                 break;
             }
         }

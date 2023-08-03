@@ -24,7 +24,7 @@ export default (wss) => {
                             ws.close();
                             return;
                         }
-                        let onlineUser = onlineUsers.find((item) => { item.account === user.account });
+                        let onlineUser = onlineUsers.find((item) => { item.id === user.id });
                         if (onlineUser) {
                             onlineUser.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.kick, "您的账号在其他地方登录，您已被迫下线")));
                             onlineUser.close();
@@ -34,14 +34,10 @@ export default (wss) => {
                         let newRefreshToken = createToken(user, config.token.refresh);
                         setToken('login' + user.id, newToken);
                         setToken('refresh' + user.id, newRefreshToken);
-                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.refresh, { token: newToken, refreshToken: newRefreshToken })));
+                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.refresh, { userName: user.nickname, token: newToken, refreshToken: newRefreshToken })));
                         ws.login = true;
-                        ws.account = user.account;
-                    }).catch((err) => {
-                        ws.send(JSON.stringify(new msgBase(code.serverError.code, -1, "登录失败,服务器异常")));
-                        ws.close();
-                        return;
-                    });
+                        ws.account = user.id;
+                    })
                 });
                 return;
             }
@@ -51,20 +47,16 @@ export default (wss) => {
                     ws.close();
                     return;
                 }
-                let onlineUser = onlineUsers.find((item) => item.account === user.account);
+                let onlineUser = onlineUsers.find((item) => item.id === user.id);
                 if (onlineUser) {
                     onlineUser.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.kick, "您的账号在其他地方登录，您已被迫下线")));
                     onlineUser.close();
                     onlineUsers.splice(onlineUsers.indexOf(onlineUser), 1);
                 }
-                ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.success, "登录成功")));
+                ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.success, { userName: user.nickname })));
                 ws.login = true;
-                ws.account = user.account;
-            }).catch((err) => {
-                ws.send(JSON.stringify(new msgBase(code.serverError.code, -1, "登录失败，服务器异常")));
-                ws.close();
-                return;
-            });
+                ws.id = user.id;
+            })
         });
     })
 }
