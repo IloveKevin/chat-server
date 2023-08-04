@@ -6,8 +6,8 @@ import getFriendList from './wsControl/get-friends';
 import getAddFriendList from './wsControl/get-addFriendList';
 import addFriend from './wsControl/add-friend';
 import handleAddFriend from './wsControl/handle-addfriend';
-import getUserInfo from './wsControl/get-userInfo';
 import { onlineUsers } from './users';
+import removeFriend from './wsControl/remove-friend';
 import config from './config';
 import msgBase from './msgBase';
 import code from './common/code';
@@ -16,13 +16,7 @@ import db from './db';
 // 定义一个websocket服务器
 const wss = new ws.Server({ port: config.webSocketServer.port });
 console.log('websocket服务器启动成功，端口号: ', config.webSocketServer.port);
-wss.sendMsg = (msg, ...clients) => {
-    clients.forEach(client => {
-        if (client.readyState === ws.OPEN) {
-            client.send(msg);
-        }
-    })
-}
+
 wss.eventListeners = new eventListeners();
 heartPing(wss);
 checkUser(wss);
@@ -30,7 +24,7 @@ getFriendList(wss);
 getAddFriendList(wss);
 addFriend(wss);
 handleAddFriend(wss);
-getUserInfo(wss);
+removeFriend(wss);
 
 // 监听客户端连接事件
 wss.on('connection', (client) => {
@@ -71,8 +65,8 @@ wss.on('connection', (client) => {
                         //查询出好友是否在线
                         let user = onlineUsers.find((item) => item.id === frend.user_id);
                         if (user) {
-                            //发送下线消息
-                            user.send(JSON.stringify(new msgBase(code.userOffline.code, code.userOffline.state.success, client.id)));
+                            //给好友发送下线消息
+                            user.send(JSON.stringify(new msgBase(code.friendOfflineResponce.code, client.id)));
                         }
                     });
                 }).catch((err) => {
