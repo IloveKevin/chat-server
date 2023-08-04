@@ -53,11 +53,4 @@ export default {
             fail: 100,
         }
     },
-    getUserInfo: {//获取用户信息
-        code: 7,
-        state: {
-            success: 200,
-            fail: 100,
-        }
-    },
 }
