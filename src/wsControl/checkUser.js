@@ -6,6 +6,7 @@ import config from "../config";
 import code from "../common/code";
 import { onlineUsers } from "../users";
 
+//judge the user is online
 const isOnline = (user) => {
     let onlineUser = onlineUsers.find((item) => item.id === user.id);
     if (onlineUser) {
