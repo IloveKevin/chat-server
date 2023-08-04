@@ -10,44 +10,42 @@ import { onlineUsers } from "../users";
 export default (wss) => {
     wss.eventListeners.on(code.checkUser.code, (ws, msg) => {
         const { token, refreshToken } = msg.data;
-        verifyToken(token, (err, decoded) => {
+        verifyToken(token, async (err, decoded) => {
             if (err) {
-                verifyToken(refreshToken, (err, _decoded) => {
+                verifyToken(refreshToken, async (err, _decoded) => {
                     if (err) {
                         ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，token以及刷新token校验失败")));
                         ws.close();
                         return;
                     }
-                    db('tb_user').where({ account: _decoded.account }).first().then((user) => {
-                        if (!user || (getToken('refresh' + user.id) !== refreshToken) || getToken('login' + user.id) !== token) {
-                            ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，用户不存在或刷新token不正确")));
-                            ws.close();
-                            return;
-                        }
-                        let onlineUser = onlineUsers.find((item) => { item.id === user.id });
-                        if (onlineUser) {
-                            onlineUser.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.kick, "您的账号在其他地方登录，您已被迫下线")));
-                            onlineUser.close();
-                            onlineUsers.splice(onlineUsers.indexOf(onlineUser), 1);
-                        }
-                        let newToken = createToken(user, config.token.login);
-                        let newRefreshToken = createToken(user, config.token.refresh);
-                        setToken('login' + user.id, newToken);
-                        setToken('refresh' + user.id, newRefreshToken);
-                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.refresh, { userName: user.nickname, token: newToken, refreshToken: newRefreshToken })));
-                        ws.login = true;
-                        ws.account = user.id;
-                    })
+                    let user = await db('tb_user').where({ account: _decoded.account }).first();
+                    if (!user || (getToken('refresh' + user.id) !== refreshToken) || getToken('login' + user.id) !== token) {
+                        ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，用户不存在或刷新token不正确")));
+                        ws.close();
+                        return;
+                    }
+                    let onlineUser = onlineUsers.find((item) => { item.id === user.id });
+                    if (onlineUser) {
+                        onlineUser.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.kick, "您的账号在其他地方登录，您已被迫下线")));
+                        onlineUser.close();
+                        onlineUsers.splice(onlineUsers.indexOf(onlineUser), 1);
+                    }
+                    let newToken = createToken(user, config.token.login);
+                    let newRefreshToken = createToken(user, config.token.refresh);
+                    setToken('login' + user.id, newToken);
+                    setToken('refresh' + user.id, newRefreshToken);
+                    ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.success, { token: newToken, refreshToken: newRefreshToken })));
+                    onlineUsers.push(ws);
                 });
-                return;
             }
-            db('tb_user').where({ account: decoded.account }).first().then((user) => {
+            else {
+                let user = await db('tb_user').where({ account: decoded.account }).first();
                 if (!user || getToken('login' + user.id) !== token) {
                     ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.fail, "登录失败，用户不存在或token不正确")));
                     ws.close();
                     return;
                 }
-                let onlineUser = onlineUsers.find((item) => item.id === user.id);
+                let onlineUser = onlineUsers.find((item) => { item.id === user.id });
                 if (onlineUser) {
                     onlineUser.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.kick, "您的账号在其他地方登录，您已被迫下线")));
                     onlineUser.close();
@@ -56,7 +54,7 @@ export default (wss) => {
                 ws.send(JSON.stringify(new msgBase(code.checkUser.code, code.checkUser.state.success, { userName: user.nickname })));
                 ws.login = true;
                 ws.id = user.id;
-            })
+            }
         });
     })
 }

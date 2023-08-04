@@ -20,15 +20,15 @@ router.post('/login', [
         .isLength({ min: 6, max: 12 })
         .withMessage('密码长度必须小于12位，大于6位'),
     paramterValidation
-], (req, res, next) => {
-    // 获取请求体中的用户名和密码
-    const { account, password } = req.body;
-    if (!account || !password) {
-        // 如果用户名或密码为空，则返回错误信息
-        return res.json({ code: 1, message: '用户名或密码不能为空' });
-    }
-    // 遍历用户数据，检查用户名和密码是否正确
-    db('tb_user').where({ account, password }).first().then((user) => {
+], async (req, res, next) => {
+    try {
+        // 获取请求体中的用户名和密码
+        const { account, password } = req.body;
+        if (!account || !password) {
+            // 如果用户名或密码为空，则返回错误信息
+            return res.json({ code: 1, message: '用户名或密码不能为空' });
+        }
+        let user = await db('tb_user').where({ account, password }).first();
         if (user) {
             // 登录成功，生成 JWT 令牌
             const token = createToken(user, config.token.login);
@@ -41,9 +41,9 @@ router.post('/login', [
         } else {
             return res.json({ code: 1, message: '登录失败' });
         }
-    }).catch((err) => {
+    } catch (err) {
         next(err);
-    });
+    }
 });
 
 router.post('/register', [
@@ -58,26 +58,22 @@ router.post('/register', [
         .isLength({ min: 6, max: 12 })
         .withMessage('密码长度必须小于12位，大于6位'),
     paramterValidation
-], (req, res, next) => {
-    const { account, password } = req.body;
-    if (!account || !password) {
-        return res.json({ code: 1, message: '用户名或密码不能为空' });
-    }
-    db('tb_user').where({ account }).first().then((user) => {
+], async (req, res, next) => {
+    try {
+        const { account, password } = req.body;
+        if (!account || !password) {
+            return res.json({ code: 1, message: '用户名或密码不能为空' });
+        }
+        let user = await db('tb_user').where({ account }).first();
         if (user) {
             return res.json({ code: 1, message: '用户名已存在' });
         }
         let nickname = '用户' + Math.floor(Math.random() * 1000000);
-        db('tb_user').insert({ account, password, nickname })
-            .then((id) => {
-                return res.json({ code: 0, message: '注册成功' });
-            })
-            .catch((err) => {
-                next(err);
-            });
-    }).catch((err) => {
+        await db('tb_user').insert({ account, password, nickname })
+        return res.json({ code: 0, message: '注册成功' });
+    } catch (err) {
         next(err);
-    });
+    }
 });
 
 
