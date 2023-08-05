@@ -27,7 +27,7 @@ const verifyTokenMiddleware = (req, res, next) => {
         }
         req.account = decoded.account;
         const savedToken = getToken('login' + decoded.id);
-        if (savedToken !== token) {
+        if (savedToken != token) {
             return res.status(401).json({ code: 1, message: '令牌无效' });
         }
         next();

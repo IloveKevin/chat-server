@@ -9,19 +9,22 @@ export default class eventListeners {
         }
     }
 
-    emit(eventName, ...args) {
+    async emit(eventName, ...args) {
         if (this.event.has(eventName)) {
-            this.event.get(eventName).forEach(callback => {
-                callback(...args);
-            });
+            try {
+                await Promise.all(this.event.get(eventName).map(callback => callback(...args)));
+            } catch (err) {
+                throw err;
+            }
         }
     }
+
 
     remove(eventName, callback) {
         if (this.event.has(eventName)) {
             const eventList = this.event.get(eventName);
-            const index = eventList.findIndex(item => item === callback);
-            if (index !== -1) {
+            const index = eventList.findIndex(item => item == callback);
+            if (index != -1) {
                 eventList.splice(index, 1);
             }
         }

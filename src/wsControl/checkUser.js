@@ -8,12 +8,26 @@ import { onlineUsers } from "../users";
 
 //judge the user is online
 const isOnline = (user) => {
-    let onlineUser = onlineUsers.find((item) => item.id === user.id);
+    let onlineUser = onlineUsers.find((item) => item.id == user.id);
     if (onlineUser) {
         onlineUser.send(JSON.stringify(new msgBase(code.checkUserRequest.code, code.checkUserRequest.state.kick, "您的账号在其他地方登录，您已被迫下线")));
         onlineUser.close();
         onlineUsers.splice(onlineUsers.indexOf(onlineUser), 1);
     }
+}
+
+const userOnlie = async (ws) => {
+    let friends = await db('tb_friend').where({ user_id: ws.id }).orWhere({ friend_id: ws.id });
+    let friendIds = [];
+    friends.forEach((item) => {
+        if (item.user_id == ws.id) friendIds.push(item.friend_id);
+        else friendIds.push(item.user_id);
+    });
+    onlineUsers.forEach((item) => {
+        if (friendIds.find((friendId) => friendId == item.id)) {
+            item.send(JSON.stringify(new msgBase(code.feiendOnlineResponce.code, 0, ws.id)));
+        }
+    })
 }
 
 //用户token验证
@@ -36,7 +50,7 @@ export default (wss) => {
                     //get user info
                     let user = await db('tb_user').where({ account: _decoded.account }).first();
                     //user not exist or refresh token not same or login token not same
-                    if (!user || (getToken('refresh' + user.id) !== refreshToken) || getToken('login' + user.id) !== token) {
+                    if (!user || (getToken('refresh' + user.id) != refreshToken) || getToken('login' + user.id) != token) {
                         ws.send(JSON.stringify(new msgBase(code.checkUserRequest.code, code.checkUserRequest.state.fail, "登录失败，用户不存在或刷新token不正确")));
                         ws.close();
                         return;
@@ -48,9 +62,10 @@ export default (wss) => {
                     let newRefreshToken = createToken(user, config.token.refresh);
                     setToken('login' + user.id, newToken);
                     setToken('refresh' + user.id, newRefreshToken);
-                    ws.send(JSON.stringify(new msgBase(code.checkUserRequest.code, code.checkUserRequest.state.success, { token: newToken, refreshToken: newRefreshToken })));
+                    ws.send(JSON.stringify(new msgBase(code.checkUserRequest.code, code.checkUserRequest.state.success, { token: newToken, refreshToken: newRefreshToken, userName: user.nickname, userId: user.id })));
                     ws.login = true;
                     ws.id = user.id;
+                    userOnlie(ws);
                 });
             }
             else {
@@ -58,16 +73,17 @@ export default (wss) => {
                 //get user info
                 let user = await db('tb_user').where({ account: decoded.account }).first();
                 //user not exist or login token not same
-                if (!user || getToken('login' + user.id) !== token) {
+                if (!user || getToken('login' + user.id) != token) {
                     ws.send(JSON.stringify(new msgBase(code.checkUserRequest.code, code.checkUserRequest.state.fail, "登录失败，用户不存在或token不正确")));
                     ws.close();
                     return;
                 }
                 //judge have user is online
                 isOnline(user);
-                ws.send(JSON.stringify(new msgBase(code.checkUserRequest.code, code.checkUserRequest.state.success, { userName: user.nickname })));
+                ws.send(JSON.stringify(new msgBase(code.checkUserRequest.code, code.checkUserRequest.state.success, { userName: user.nickname, userId: user.id })));
                 ws.login = true;
                 ws.id = user.id;
+                userOnlie(ws);
             }
         });
     })

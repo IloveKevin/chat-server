@@ -9,36 +9,23 @@ export default (wss) => {
         let userId = ws.id;
         //get need add friend id
         let friendId = msg.data.friendId;
-        //get need add friend info
-        let friend = await db('tb_friend').where({ user_id: userId, friend_id: friendId }).select('id').first();
+        if (userId == friendId) return ws.send(JSON.stringify(new msgBase(code.addFriendRequest.code, code.addFriendRequest.state.addSelf)));
+
+        let friend = await db('tb_friend').where({ user_id: userId, friend_id: friendId }).orWhere({ user_id: friendId, friend_id: userId }).first();
+
         if (friend) {
-            await db('tb_friend').where({ id: friend.id }).update({ state: 2 });
+            ws.send(JSON.stringify(new msgBase(code.addFriendRequest.code, code.addFriendRequest.state.isFriend)));
         }
         else {
-            await db('tb_friend').insert({ user_id: userId, friend_id: friendId, state: 2 });
-        }
-        //get need add friend has add me
-        let friend2 = await db('tb_friend').where({ user_id: friendId, friend_id: userId }).first();
-        if (friend2) {
-            let _code;
-            switch (friend2.state) {
-                case 0:
-                    _code = code.addFriendRequest.state.refuse;//用户已经拒绝过了
-                    break;
-                case 1:
-                    _code = code.addFriendRequest.state.repeat;//重复添加
-                    break;
-                case 2:
-                    _code = code.addFriendRequest.state.isFriend;//已经是好友了
-            }
-            ws.send(JSON.stringify(new msgBase(code.addFriendRequest.code, _code)));
-        }
-        else {
-            await db('tb_friend').insert({ user_id: friendId, friend_id: userId, state: 1 });
+            let addFriend = await db('tb_add_friend').where({ user_id: userId, friend_id: friendId }).first();
+            if (addFriend) return ws.send(JSON.stringify(new msgBase(code.addFriendRequest.code, code.addFriendRequest.state.repeat)));
+            await db('tb_add_friend').insert({ user_id: userId, friend_id: friendId });
             ws.send(JSON.stringify(new msgBase(code.addFriendRequest.code, code.addFriendRequest.state.success)));
-            ws.send(JSON.stringify(new msgBase(code.addFriendResponce.code, code.addFriendResponce.state.success, { friendId: friendId })));
-            let friendWs = onlineUsers.find((item) => item.id === friendId);
-            if (friendWs) ws.send(JSON.stringify(new msgBase(code.newAddFriendRequest.code, { friendId: userId })));
+            let friendWs = onlineUsers.find((item) => item.id == friendId);
+            if (friendWs) {
+                let user = await db('tb_user').where({ id: userId }).select('nickname').first();
+                friendWs.send(JSON.stringify(new msgBase(code.newAddFriendRequest.code, 0, { friendId: userId, friendName: user.nickname })));
+            }
         }
     });
 }

@@ -35,12 +35,12 @@ wss.on('connection', (client) => {
 
     client.isPing = true;
     // 监听客户端消息事件
-    client.on('message', (message) => {
+    client.on('message', async (message) => {
         try {
             message = JSON.parse(message.toString());
             console.log('收到消息: ', message);
-            if (message.code !== undefined && message.code !== null) {
-                wss.eventListeners.emit(message.code, client, message);
+            if (message.code != undefined && message.code != null) {
+                await wss.eventListeners.emit(message.code, client, message);
             }
         }
         catch (err) {
@@ -52,30 +52,31 @@ wss.on('connection', (client) => {
         }
     });
     // 监听客户端断开连接事件
-    client.on('close', () => {
+    client.on('close', async () => {
         // 将断开连接的客户端移出客户端列表
         for (let i = 0; i < onlineUsers.length; i++) {
-            if (onlineUsers[i] === client) {
+            if (onlineUsers[i] == client) {
                 onlineUsers.splice(i, 1);
                 //用户下线
                 //查询出所有好友
-                client.id && db('tb_friend').where({ friend_id: client.id }).select('user_id').then((frends) => {
-                    //遍历所有好友，如果在线则发送下线消息
-                    frends && frends.forEach((frend) => {
-                        //查询出好友是否在线
-                        let user = onlineUsers.find((item) => item.id === frend.user_id);
-                        if (user) {
-                            //给好友发送下线消息
-                            user.send(JSON.stringify(new msgBase(code.friendOfflineResponce.code, client.id)));
-                        }
-                    });
-                }).catch((err) => {
-                    console.log('查询好友列表时发生异常');
-                    console.log('异常信息: ', err.message);
-                    console.log('错误类型: ', err.name);
-                    console.log('错误堆栈: ', err.stack);
+                if (!client.login) return;
+                let friends = await db('tb_friend').where({ friend_id: client.id }).orWhere({ user_id: client.id });
+                let friendId = [];
+                friends.forEach((friend) => {
+                    if (friend.user_id == client.id) {
+                        friendId.push(friend.friend_id);
+                    }
+                    else {
+                        friendId.push(friend.user_id);
+                    }
                 });
-                break;
+                //查询出所有好友是否在线
+                let onlineFriends = onlineUsers.filter((user) => friendId.includes(user.id));
+                //给所有在线好友发送下线消息
+                onlineFriends.forEach((friend) => {
+                    friend.send(JSON.stringify(new msgBase(code.friendOfflineResponce.code, 0, client.id)));
+                });
+                return;
             }
         }
     });
