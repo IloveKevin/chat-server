@@ -9,7 +9,7 @@ import handleAddFriend from './wsControl/handle-addfriend';
 import { onlineUsers } from './users';
 import removeFriend from './wsControl/remove-friend';
 import config from './config';
-import msgBase from './msgBase';
+import msgBase from './wsControl/base/msgBase';
 import code from './common/code';
 import db from './db';
 

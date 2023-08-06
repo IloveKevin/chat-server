@@ -1,6 +1,6 @@
 import code from "../common/code";
 import db from "../db";
-import msgBase from "../msgBase";
+import msgBase from "./base/msgBase";
 
 export default (wss) => {
     wss.eventListeners.on(code.getAddFriendListRequest.code, async (ws, msg) => {

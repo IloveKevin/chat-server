@@ -1,5 +1,5 @@
 import code from "../common/code";
-import msgBase from "../msgBase";
+import msgBase from "./base/msgBase";
 import db from "../db";
 import { onlineUsers } from "../users";
 
